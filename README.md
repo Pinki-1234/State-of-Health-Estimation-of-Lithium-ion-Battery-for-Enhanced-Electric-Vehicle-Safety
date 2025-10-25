@@ -1,82 +1,58 @@
-# 🔋 Feature-Driven SOH Estimation for Lithium-ion Batteries in EVs
+# State-of-Health Estimation of Lithium-ion Battery for Enhanced Electric Vehicle Safety
 
-## A Lightweight Support Vector Regression (SVR) Approach for BMS Integration
+## Overview
+Lithium-ion batteries (LIBs) are the core energy source in Electric Vehicles (EVs) due to their high energy density and long cycle life. Battery degradation over time affects EV safety and reliability. Estimating the State of Health (SOH) of these batteries is essential for optimal performance, safety, and longevity.
 
-[cite_start]This repository contains the methodology and code implementation for a novel State-of-Health (SOH) estimation technique for Lithium-ion Batteries (LIBs), specifically designed for **real-time compatibility with Battery Management Systems (BMS)** in Electric Vehicles (EVs)[cite: 5, 13, 22].
-
----
-
-## 🌟 Project Overview
-
-[cite_start]The project addresses the critical challenge posed by the complexity and data intensity of traditional SOH estimation methods[cite: 10, 110, 109]. [cite_start]Our goal is to develop a **simple, lightweight, and empirically validated** technique that uses easily measurable external battery data[cite: 11, 22, 110].
-
-[cite_start]The ultimate goal is to enable real-time battery health monitoring to prevent battery abuse and enhance EV safety[cite: 13, 23, 117].
-
-### Key Achievements
-
-* [cite_start]**Accuracy:** Achieved prediction accuracy with an **Absolute Percentage Error under 1.2%**[cite: 61, 259, 112].
-* [cite_start]**Efficiency:** Requires **only voltage-time data** during constant current charging, eliminating the need for internal battery parameters[cite: 94, 137, 262].
-* [cite_start]**Compatibility:** The simplified approach is compatible with embedded BMS hardware[cite: 95, 140, 263].
+This repository presents a simple and efficient SOH estimation technique that uses only voltage–time data measured during constant current charging, allowing real-time compatibility with battery management systems (BMS) in electric vehicles.
 
 ---
 
-## 🛠️ Methodology: Feature Engineering & SVR
-
-[cite_start]Our method leverages the observable relationship that as SOH decreases, the voltage-time curve shifts upward, reaching the upper cutoff voltage in a shorter time[cite: 70, 88, 220].
-
-### 1. Model Basis
-
-[cite_start]A **second-order Equivalent Circuit Model (2RC ECM)** was used initially for parameter estimation and to simulate the electrical performance of the LIB cell[cite: 26, 44, 64, 144]. This established the foundation for studying voltage behavior.
-
-### 2. Extracted Features (The Input Vector $\mathbf{X}$)
-
-Two critical, easy-to-extract features serve as the inputs for the SVR model:
-
-| Feature | Definition | SOH Correlation | MATLAB Extraction Method |
-| :--- | :--- | :--- | :--- |
-| **$T_{4V}$** | [cite_start]Time taken (in hours) for the terminal voltage to reach $\mathbf{4.0\text{V}}$ during CC charging[cite: 31, 213]. | [cite_start]Directly reflects capacity loss (decreases as SOH falls)[cite: 70, 220]. | Determined by index finding: $\mathbf{time}(\mathbf{idx\_4v})$. |
-| **Slope ($\frac{dV}{dt}$)** | [cite_start]Rate of voltage change in the region between $\mathbf{3.8\text{V}}$ and $\mathbf{4.0\text{V}}$[cite: 31, 214]. | Captures the change in polarization resistance. | Calculated via $\mathbf{polyfit}(\dots, 1)$ on the voltage segment. |
-
-### 3. SOH Prediction Model (SVR)
-
-[cite_start]A **Support Vector Regression (SVR)** model is trained on the known feature set ($\mathbf{X}$) and corresponding SOH labels ($\mathbf{Y}$)[cite: 111, 240]. [cite_start]SVR was chosen for its ability to handle non-linear mapping while remaining computationally efficient for real-time applications[cite: 112, 139].
+## Motivation
+Accurate SOH monitoring allows EV users and manufacturers to track battery aging, optimize usage, and safeguard against failures. Existing techniques are often complex, data-intensive, or unsuitable for real-time use on embedded systems. This project closes that gap with a practical, computationally lightweight method.
 
 ---
 
-## 💻 Code Structure (MATLAB)
+## Methodology
 
-The workflow is implemented in MATLAB, integrating data processing and machine learning:
+### 1. Literature Review
+- Electrochemical model-based methods yield high accuracy but demand heavy computation and detailed battery parameters, making them impractical for real-time embedded use.
+- Machine learning methods, while flexible, often require large labeled datasets covering a wide range of conditions.
+- Empirical and equivalent circuit models offer a good balance of simplicity, speed, and external observability, but are often based only on basic electrical measurements.
 
-1.  **Data Initialization**: Load known SOH profiles (100\% to 80\%).
-2.  **Feature Extraction**: A $\mathbf{FOR}$ loop iterates through all known profiles to compute $T_{4V}$ and Slope, populating the training matrix $\mathbf{X}$.
-3.  **Training**: The model is trained using $\mathbf{fitrsvm}(\mathbf{X}, \mathbf{Y}, \text{'KernelFunction', 'rbf', } \text{'Standardize', true})$.
-4.  **Prediction**: Features ($\mathbf{features\_u}$) from an unknown profile are extracted and fed to the model using $\mathbf{predict}(\mathbf{mdl}, \mathbf{features\_u})$.
+### 2. Proposed Approach
+This approach uses two easy-to-measure features from a battery's constant current charging profile:
 
-## 📊 Performance Validation
+- **T₄V:** Time taken to reach 4.0 V.
+- **Slope:** Voltage rise rate between 3.8 V and 4.0 V.
 
-The technique demonstrated high accuracy on unseen test cases:
-
-| Case | [cite_start]Actual SOH Range [cite: 61] | [cite_start]Predicted SOH (\%) [cite: 61] | [cite_start]Absolute Error Range (\%) [cite: 61] |
-| :--- | :--- | :--- | :--- |
-| **CASE 1** | [87-89]\% | 88.06\% | [1.22, 1.06]\% |
-| **CASE 2** | [98-100]\% | 99.10\% | [1.12, 0.90]\% |
-
-[cite_start]The minimal error confirms the reliability of using these two features for accurate SOH monitoring[cite: 259, 112].
+These features are obtained from voltage–time curves recorded at various SOH levels and used as input for a support vector regression (SVR) model to predict the battery’s SOH.
 
 ---
 
-## 🚀 Future Scope
+## Key Results
 
-The robust foundation allows for direct continuation into practical deployment:
+| Case | Slope (V/s) | T₄V (h) | Predicted SOH (%) | Actual SOH (%) | Error (%) |
+|------|-------------|---------|-------------------|----------------|-----------|
+| 1 | 0.002919 | 1.14 | 88.06 | 87–89 | 1.22 |
+| 2 | 0.002654 | 1.36 | 99.10 | 98–100 | 1.12 |
 
-* [cite_start]**Validation:** Testing with **real experimental charging data** at various SOH levels[cite: 97, 265].
-* [cite_start]**Extension:** Expanding the method to include the effect of **temperature variation** for comprehensive SOH estimation[cite: 98, 266].
-* [cite_start]**Deployment:** Integration and validation onto an **$\text{STM32}$-based plug-and-play IoT system**[cite: 98, 267].
+- The SVR model gives SOH predictions with an absolute error within 1.2%.
+- Only two voltage features are required—making the approach suitable for embedded or real-time systems.
 
 ---
 
-## 🎓 Author and Affiliation
+## Advantages
+- Uses only **external voltage–time measurements** (no need for internal chemical or physical parameters).
+- Computationally simple—**suitable for microcontroller-based BMS**.
+- Reliable and accurate (error < 1.2% in prediction testing).
 
-* **Student:** Pinki Saini (Roll no.: 22110194)
-* **Department:** Electrical Engineering, IIT Gandhinagar
-* [cite_start]**Advisor:** Dr. Pallavi Bharadwaj, Smart Power Electronics Laboratory (SPEL) [cite: 6]
+---
+
+## Future Work
+- Validate the method with real-world experimental charge data.
+- Integrate temperature compensation for broader applicability.
+- Embed the algorithm into STM32 or similar microcontrollers for plug-and-play IoT solutions in next-gen EVs.
+
+---
+
+
